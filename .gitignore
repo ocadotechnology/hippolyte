@@ -49,3 +49,6 @@ coverage.xml
 # Serverless directories
 .serverless
 .requirements
+
+# Pycharm
+.idea/
