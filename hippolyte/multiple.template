@@ -1,0 +1,62 @@
+{
+  "objects": [
+    {
+      "subnetId": "{{subnetId}}",
+      "bootstrapAction": "s3://{{region}}.elasticmapreduce/bootstrap-actions/configure-hadoop, {{clusterMemory}}",
+      "name": "EmrClusterForBackup",
+      "coreInstanceCount": "{{coreInstanceCount}}",
+      "coreInstanceType": "{{coreInstanceType}}",
+      "amiVersion": "3.9.0",
+      "masterInstanceType": "{{masterInstanceType}}",
+      "id": "EmrClusterForBackup",
+      "region": "{{region}}",
+      "type": "EmrCluster",
+      "terminateAfter": "{{terminateAfter}}"
+    },
+    {
+      "failureAndRerunMode": "CASCADE",
+      "resourceRole": "DataPipelineDefaultResourceRole",
+      "role": "DataPipelineDefaultRole",
+      "pipelineLogUri": "s3://{{s3PipelineLogBucket}}/",
+      "scheduleType": "ONDEMAND",
+      "name": "Default",
+      "id": "Default"
+    },
+    {{#backups}}
+    {
+      "readThroughputPercent": "{{dbSourceTableReadThroughputPercent}}",
+      "name": "{{dbSourceTableName}}",
+      "id": "{{dbSourceTableId}}",
+      "type": "DynamoDBDataNode",
+      "tableName": "{{dynamoDBTableName}}"
+    },
+    {
+      "output": {
+        "ref": "{{s3BackupLocationId}}"
+      },
+      "input": {
+        "ref": "{{dbSourceTableId}}"
+      },
+      "maximumRetries": "{{tableBackupActivityMaximumRetries}}",
+      "name": "{{tableBackupActivityName}}",
+      "step": "s3://dynamodb-emr-{{region}}/emr-ddb-storage-handler/2.1.0/emr-ddb-2.1.0.jar,org.apache.hadoop.dynamodb.tools.DynamoDbExport,#{output.directoryPath},#{input.tableName},#{input.readThroughputPercent}",
+      "id": "{{tableBackupActivityId}}",
+      "runsOn": {
+        "ref": "EmrClusterForBackup"
+      },
+      "type": "EmrActivity",
+      "resizeClusterBeforeRunning": "false"
+    },
+    {
+      "directoryPath": "s3://{{s3BackupBucket}}/{{dynamoDBTableName}}/#{format(@scheduledStartTime, 'YYYY-MM-dd-HH-mm-ss')}",
+      "name": "{{s3BackupLocationName}}",
+      "id": "{{s3BackupLocationId}}",
+      "type": "S3DataNode"
+    }{{#comma}},{{/comma}}
+    {{/backups}}
+  ],
+  "parameters": [
+  ],
+  "values": {
+  }
+}
