@@ -33,7 +33,7 @@ Part of the job of our scheduling Lambda function is to attempt to optimally ass
 * EmrActivity
 * S3DataNode
 
-In addition to this 2 additional objects are needed, the pipeline configuration and an EmrCluster node. 32 * 3 + 2 = 100. In addition to this hard limit we also want every backup to run between 12:00 AM and 7:00 AM. We can work out how long each pipeline will take to complete by starting with some static values
+In addition to this 2 additional objects are needed, the pipeline configuration and an EmrCluster node. 32 * 3 + 2 = 98. In addition to this hard limit we also want every backup to run between 12:00 AM and 7:00 AM. We can work out how long each pipeline will take to complete by starting with some static values
 
 * EMR cluster bootstrap (10 min)
 * EMR activity bootstrap (1 min)
