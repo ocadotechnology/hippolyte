@@ -63,7 +63,7 @@ Go to DataPipeline web console and create new pipeline. In our example, values w
 
 * Name: restore-test
 * Source: Build using template ( Import DynamoDB backup data from S3 ).
-* Input S3 folder: s3://hippolyte-eu-west-1-prod-backups/table-name/2017-02-22-00-10-39/
+* Input S3 folder: s3://hippolyte-eu-west-1-prod-backups/table_name/2017-02-22-00-10-39/
 * Target DynamoDB table name: table_name
 * DynamoDB write throughput ratio: 1 //use full speed, as we are the only users now )
 * Region of DynamoDB table: eu-west-1
