@@ -1,0 +1,79 @@
+service: hippolyte
+
+provider:
+  name: aws
+  runtime: python2.7
+  role: LambdaRole
+
+  # If you have multiple accounts then it's recommended to use multiple profiles to store AWS credentials
+  # The 'custom' sections for the stage/profiles key value map.
+  region: ${opt:stage, self:custom.defaultRegion}
+  stage: ${opt:stage, self:custom.defaultStage}
+  profile: ${self:custom.profiles.${self:provider.stage}}
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  defaultStage: dev
+  defaultRegion: us-east-1
+  profiles:
+    # These should correspond to the account credentails stored in ~/.aws/credentials
+    dev: devProfile
+    prod: prodProfile
+
+
+functions:
+  backup:
+    handler: hippolyte.dynamodb_backup.lambda_handler
+    events:
+      # The lambda function depends on the names of these events to determine in which mode to run
+      - schedule:
+          name: hippolyte-${self:provider.stage}-backup-event
+          rate: cron(10 0 * * ? *)
+      - schedule:
+          name: hippolyte-${self:provider.stage}-monitor-dynamodb-backup
+          rate: cron(15 1-10 * * ? *)
+
+resources:
+  Resources:
+    LambdaRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: "sts:AssumeRole"
+        ManagedPolicyArns:
+          - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccesswithDataPipeline"
+        Policies:
+          - PolicyName: LambdaPolicy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    - Fn::Sub: "arn:aws:logs:${self:provider.region}:*:log-group:/aws/lambda/*:*:*"
+                -  Effect: "Allow"
+                   Action:
+                     - "sns:Publish"
+                   Resource: {"Ref": "EmailNotificationTopic"}
+    BackupBucket:
+      Type: "AWS::S3::Bucket"
+      Properties:
+        BucketName: hippolyte-${self:provisioner.region}-${self:provisioner.stage}-backups
+    EmailNotificationTopic:
+      Type: "AWS::SNS::Topic"
+      Properties:
+        TopicName: hippolyte-backup-monitoring
+        Subscription:
+          - Protocol: email
+            Endpoint: ${opt:email, example@example.com}
