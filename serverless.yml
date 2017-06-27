@@ -7,7 +7,7 @@ provider:
 
   # If you have multiple accounts then it's recommended to use multiple profiles to store AWS credentials
   # The 'custom' sections for the stage/profiles key value map.
-  region: ${opt:stage, self:custom.defaultRegion}
+  region: ${opt:region, self:custom.defaultRegion}
   stage: ${opt:stage, self:custom.defaultStage}
   profile: ${self:custom.profiles.${self:provider.stage}}
 
