@@ -74,3 +74,6 @@ Go to DataPipeline web console and create new pipeline. In our example, values w
 
 Do not click Activate yet, as at the time of writing it that default template is missing some mandatory parameters. Instead click Edit in Architect.
 Now click EmrCluster on diagram and go to Add an optional field… find terminateAfter and set it to a value, high above estimated restore duration, like 3 Days. Add in the same place Subnet Id and set it to EMR-Subnet. Save it and click Activate.
+
+## Need help with the setup?
+Please pm me: romek.rjm@gmail.com
