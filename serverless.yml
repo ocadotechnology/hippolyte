@@ -76,4 +76,4 @@ resources:
         TopicName: hippolyte-backup-monitoring
         Subscription:
           - Protocol: email
-            Endpoint: ${opt:email, example@example.com}
+            Endpoint: ${opt:email, self:custom.defaultEmail}
