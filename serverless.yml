@@ -69,7 +69,7 @@ resources:
     BackupBucket:
       Type: "AWS::S3::Bucket"
       Properties:
-        BucketName: hippolyte-${self:provisioner.region}-${self:provisioner.stage}-backups
+        BucketName: hippolyte-${self:provider.region}-${self:provider.stage}-backups
     EmailNotificationTopic:
       Type: "AWS::SNS::Topic"
       Properties:
