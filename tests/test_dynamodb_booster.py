@@ -28,7 +28,8 @@ def create_test_table(dynamodb_client, table_name, table):
 
 
 def load_backup_metadata():
-    with open("resources/test_backup_metadata.json") as f:
+    metadata_file = os.path.join(os.path.dirname(__file__), 'resources/test_backup_metadata.json')
+    with open(metadata_file) as f:
         return f.read()
 
 
@@ -104,7 +105,8 @@ class TestDynamoDbBooster(unittest.TestCase):
     @mock_datapipeline
     @mock_s3
     @patch("hippolyte.config_util.ConfigUtil.list_backed_up_tables", return_value=TABLE_NAME)
-    @patch("hippolyte.aws_utils.ApplicationAutoScalingUtil._init_client", return_value=FakeApplicationAutoscalingClient())
+    @patch("hippolyte.aws_utils.ApplicationAutoScalingUtil._init_client",
+           return_value=FakeApplicationAutoscalingClient())
     def test_restore_throughput(self, config_mock, autoscaling_mock):
         dynamodb_client = boto3.client('dynamodb', region_name='eu-west-1')
         s3_client = boto3.client('s3')
@@ -126,7 +128,8 @@ class TestDynamoDbBooster(unittest.TestCase):
     @mock_dynamodb2
     @mock_datapipeline
     @mock_s3
-    @patch("hippolyte.aws_utils.ApplicationAutoScalingUtil._init_client", return_value=FakeApplicationAutoscalingClient())
+    @patch("hippolyte.aws_utils.ApplicationAutoScalingUtil._init_client",
+           return_value=FakeApplicationAutoscalingClient())
     def test_autoscaling_support(self, autoscaling_mock):
         backup_metadata = load_backup_metadata()
         backup_metadata_dict = json.loads(backup_metadata)
