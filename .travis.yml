@@ -3,6 +3,9 @@ language: python
 python:
   - "2.7"
 
+env:
+  - AWS_DEFAULT_REGION=us-east-1
+
 install:
   - pip install -r requirements-dev.txt
 
