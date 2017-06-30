@@ -1,145 +1,233 @@
 {
-    "Pipelines": [
+  "Pipelines": [
+    {
+      "backed_up_tables": [
+        "prd-shd-euw1-scotty_audit-actions"
+      ],
+      "definition": {
+        "objects": [
+          {
+            "amiVersion": "3.9.0",
+            "bootstrapAction": "s3://eu-west-1.elasticmapreduce/bootstrap-actions/configure-hadoop, --yarn-key-value,yarn.nodemanager.resource.memory-mb=11520,--yarn-key-value,yarn.scheduler.maximum-allocation-mb=11520,--yarn-key-value,yarn.scheduler.minimum-allocation-mb=1440,--yarn-key-value,yarn.app.mapreduce.am.resource.mb=2880,--mapred-key-value,mapreduce.map.memory.mb=5760,--mapred-key-value,mapreduce.map.java.opts=-Xmx4608M,--mapred-key-value,mapreduce.reduce.memory.mb=2880,--mapred-key-value,mapreduce.reduce.java.opts=-Xmx2304m,--mapred-key-value,mapreduce.map.speculative=false",
+            "coreInstanceCount": "1",
+            "coreInstanceType": "m3.xlarge",
+            "id": "EmrClusterForBackup",
+            "masterInstanceType": "m3.xlarge",
+            "name": "EmrClusterForBackup",
+            "region": "eu-west-1",
+            "subnetId": "subnet-9f2395c6",
+            "terminateAfter": "5 Hour",
+            "type": "EmrCluster"
+          },
+          {
+            "failureAndRerunMode": "CASCADE",
+            "id": "Default",
+            "name": "Default",
+            "pipelineLogUri": "s3://euw1-dynamodb-backups-prd-480503113116/logs/2017-06-22-13-53-48/",
+            "resourceRole": "DataPipelineDefaultResourceRole",
+            "role": "DataPipelineDefaultRole",
+            "scheduleType": "ONDEMAND"
+          },
+          {
+            "id": "DDBSourceTable5",
+            "name": "DDBSourceTable5",
+            "readThroughputPercent": "0.5",
+            "tableName": "prd-shd-euw1-scotty_audit-actions",
+            "type": "DynamoDBDataNode"
+          },
+          {
+            "id": "TableBackupActivity5",
+            "input": {
+              "ref": "DDBSourceTable5"
+            },
+            "maximumRetries": "2",
+            "name": "TableBackupActivity5",
+            "output": {
+              "ref": "S3BackupLocation5"
+            },
+            "resizeClusterBeforeRunning": "false",
+            "runsOn": {
+              "ref": "EmrClusterForBackup"
+            },
+            "step": "s3://dynamodb-emr-eu-west-1/emr-ddb-storage-handler/2.1.0/emr-ddb-2.1.0.jar,org.apache.hadoop.dynamodb.tools.DynamoDbExport,#{output.directoryPath},#{input.tableName},#{input.readThroughputPercent}",
+            "type": "EmrActivity"
+          },
+          {
+            "directoryPath": "s3://euw1-dynamodb-backups-prd-480503113116/prd-shd-euw1-scotty_audit-actions/#{format(@scheduledStartTime, 'YYYY-MM-dd-HH-mm-ss')}",
+            "id": "S3BackupLocation5",
+            "name": "S3BackupLocation5",
+            "type": "S3DataNode"
+          }
+        ],
+        "parameters": [],
+        "values": {}
+      },
+      "pipeline_id": "df-0024453ANW0OBWGL7YE"
+    }
+  ],
+  "ScalableTargets": [
+    {
+      "CreationTime": "2017-06-26 15:21:59.485000+01:00",
+      "MaxCapacity": 20,
+      "MinCapacity": 1,
+      "ResourceId": "table/prd-shd-euw1-scotty_audit-actions",
+      "RoleARN": "arn:aws:iam::480503113116:role/service-role/DynamoDBAutoscaleRole",
+      "ScalableDimension": "dynamodb:table:ReadCapacityUnits",
+      "ServiceNamespace": "dynamodb"
+    },
+    {
+      "CreationTime": "2017-06-26 10:50:25.988000+01:00",
+      "MaxCapacity": 20,
+      "MinCapacity": 1,
+      "ResourceId": "table/prd-shd-euw1-scotty_audit-actions",
+      "RoleARN": "arn:aws:iam::480503113116:role/service-role/DynamoDBAutoscaleRole",
+      "ScalableDimension": "dynamodb:table:WriteCapacityUnits",
+      "ServiceNamespace": "dynamodb"
+    }
+  ],
+  "ScalingPolicies": [
+    {
+      "Alarms": [
         {
-            "backed_up_tables": [
-                "prd-shd-euw1-scotty_audit-actions"
+          "AlarmARN": "arn:aws:cloudwatch:eu-west-1:480503113116:alarm:TargetTracking-table/prd-shd-euw1-scotty_audit-actions-AlarmHigh-7a9350d5-c056-4c5e-a320-13f79e03fc38",
+          "AlarmName": "TargetTracking-table/prd-shd-euw1-scotty_audit-actions-AlarmHigh-7a9350d5-c056-4c5e-a320-13f79e03fc38"
+        },
+        {
+          "AlarmARN": "arn:aws:cloudwatch:eu-west-1:480503113116:alarm:TargetTracking-table/prd-shd-euw1-scotty_audit-actions-AlarmLow-3d3edf7e-19b6-4e76-83ad-e6e361a44b32",
+          "AlarmName": "TargetTracking-table/prd-shd-euw1-scotty_audit-actions-AlarmLow-3d3edf7e-19b6-4e76-83ad-e6e361a44b32"
+        },
+        {
+          "AlarmARN": "arn:aws:cloudwatch:eu-west-1:480503113116:alarm:TargetTracking-table/prd-shd-euw1-scotty_audit-actions-ProvisionedCapacityHigh-85a1bd4d-f20b-4ced-b7e6-09ef8f9e4177",
+          "AlarmName": "TargetTracking-table/prd-shd-euw1-scotty_audit-actions-ProvisionedCapacityHigh-85a1bd4d-f20b-4ced-b7e6-09ef8f9e4177"
+        },
+        {
+          "AlarmARN": "arn:aws:cloudwatch:eu-west-1:480503113116:alarm:TargetTracking-table/prd-shd-euw1-scotty_audit-actions-ProvisionedCapacityLow-e1d925ed-e223-4ba2-9be7-fef3937b9622",
+          "AlarmName": "TargetTracking-table/prd-shd-euw1-scotty_audit-actions-ProvisionedCapacityLow-e1d925ed-e223-4ba2-9be7-fef3937b9622"
+        }
+      ],
+      "CreationTime": "2017-06-26 10:50:26.091000+01:00",
+      "PolicyARN": "arn:aws:autoscaling:eu-west-1:480503113116:scalingPolicy:6220b41e-18f1-4212-9013-ad4f5b9ca247:resource/dynamodb/table/prd-shd-euw1-scotty_audit-actions:policyName/DynamoDBWriteCapacityUtilization:table/prd-shd-euw1-scotty_audit-actions",
+      "PolicyName": "DynamoDBWriteCapacityUtilization:table/prd-shd-euw1-scotty_audit-actions",
+      "PolicyType": "TargetTrackingScaling",
+      "ResourceId": "table/prd-shd-euw1-scotty_audit-actions",
+      "ScalableDimension": "dynamodb:table:WriteCapacityUnits",
+      "ServiceNamespace": "dynamodb",
+      "TargetTrackingScalingPolicyConfiguration": {
+        "PredefinedMetricSpecification": {
+          "PredefinedMetricType": "DynamoDBWriteCapacityUtilization"
+        },
+        "TargetValue": 70.0
+      }
+    },
+    {
+      "Alarms": [
+        {
+          "AlarmARN": "arn:aws:cloudwatch:eu-west-1:480503113116:alarm:TargetTracking-table/prd-shd-euw1-scotty_audit-actions-AlarmHigh-13a0215d-5b1f-4ddc-ad7e-5d58ba296a66",
+          "AlarmName": "TargetTracking-table/prd-shd-euw1-scotty_audit-actions-AlarmHigh-13a0215d-5b1f-4ddc-ad7e-5d58ba296a66"
+        },
+        {
+          "AlarmARN": "arn:aws:cloudwatch:eu-west-1:480503113116:alarm:TargetTracking-table/prd-shd-euw1-scotty_audit-actions-AlarmLow-ea7fbdd6-1aa4-4e9c-9ab9-66d8d7183e22",
+          "AlarmName": "TargetTracking-table/prd-shd-euw1-scotty_audit-actions-AlarmLow-ea7fbdd6-1aa4-4e9c-9ab9-66d8d7183e22"
+        },
+        {
+          "AlarmARN": "arn:aws:cloudwatch:eu-west-1:480503113116:alarm:TargetTracking-table/prd-shd-euw1-scotty_audit-actions-ProvisionedCapacityHigh-3acc8c06-62cd-4c1e-95e4-6f22a911a2ef",
+          "AlarmName": "TargetTracking-table/prd-shd-euw1-scotty_audit-actions-ProvisionedCapacityHigh-3acc8c06-62cd-4c1e-95e4-6f22a911a2ef"
+        },
+        {
+          "AlarmARN": "arn:aws:cloudwatch:eu-west-1:480503113116:alarm:TargetTracking-table/prd-shd-euw1-scotty_audit-actions-ProvisionedCapacityLow-a8f80034-8f75-4860-b2a3-2fada5cce22d",
+          "AlarmName": "TargetTracking-table/prd-shd-euw1-scotty_audit-actions-ProvisionedCapacityLow-a8f80034-8f75-4860-b2a3-2fada5cce22d"
+        }
+      ],
+      "CreationTime": "2017-06-26 15:21:59.571000+01:00",
+      "PolicyARN": "arn:aws:autoscaling:eu-west-1:480503113116:scalingPolicy:ddb81ffd-483d-4b37-8e38-1440e5d7d37d:resource/dynamodb/table/prd-shd-euw1-scotty_audit-actions:policyName/DynamoDBReadCapacityUtilization:table/prd-shd-euw1-scotty_audit-actions",
+      "PolicyName": "DynamoDBReadCapacityUtilization:table/prd-shd-euw1-scotty_audit-actions",
+      "PolicyType": "TargetTrackingScaling",
+      "ResourceId": "table/prd-shd-euw1-scotty_audit-actions",
+      "ScalableDimension": "dynamodb:table:ReadCapacityUnits",
+      "ServiceNamespace": "dynamodb",
+      "TargetTrackingScalingPolicyConfiguration": {
+        "PredefinedMetricSpecification": {
+          "PredefinedMetricType": "DynamoDBReadCapacityUtilization"
+        },
+        "TargetValue": 70.0
+      }
+    }
+  ],
+  "Tables": [
+    {
+      "ResponseMetadata": {
+        "HTTPHeaders": {
+          "content-length": "1202",
+          "content-type": "application/x-amz-json-1.0",
+          "date": "Thu, 22 Jun 2017 13:53:47 GMT",
+          "x-amz-crc32": "3477012252",
+          "x-amzn-requestid": "O02UK4SOAUB6CP49O5US1K1O63VV4KQNSO5AEMVJF66Q9ASUAAJG"
+        },
+        "HTTPStatusCode": 200,
+        "RequestId": "O02UK4SOAUB6CP49O5US1K1O63VV4KQNSO5AEMVJF66Q9ASUAAJG"
+      },
+      "Table": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "startDate",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "startTime",
+            "AttributeType": "S"
+          }
+        ],
+        "CreationDateTime": "2015-06-15 16:12:43.471000+00:00",
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexArn": "arn:aws:dynamodb:eu-west-1:480503113116:table/prd-shd-euw1-scotty_audit-actions/index/StartDateIndex",
+            "IndexName": "StartDateIndex",
+            "IndexSizeBytes": 4010436256,
+            "IndexStatus": "ACTIVE",
+            "ItemCount": 2091475,
+            "KeySchema": [
+              {
+                "AttributeName": "startDate",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "startTime",
+                "KeyType": "RANGE"
+              }
             ],
-            "definition": {
-                "objects": [
-                    {
-                        "amiVersion": "3.9.0",
-                        "bootstrapAction": "s3://eu-west-1.elasticmapreduce/bootstrap-actions/configure-hadoop, --yarn-key-value,yarn.nodemanager.resource.memory-mb=11520,--yarn-key-value,yarn.scheduler.maximum-allocation-mb=11520,--yarn-key-value,yarn.scheduler.minimum-allocation-mb=1440,--yarn-key-value,yarn.app.mapreduce.am.resource.mb=2880,--mapred-key-value,mapreduce.map.memory.mb=5760,--mapred-key-value,mapreduce.map.java.opts=-Xmx4608M,--mapred-key-value,mapreduce.reduce.memory.mb=2880,--mapred-key-value,mapreduce.reduce.java.opts=-Xmx2304m,--mapred-key-value,mapreduce.map.speculative=false",
-                        "coreInstanceCount": "1",
-                        "coreInstanceType": "m3.xlarge",
-                        "id": "EmrClusterForBackup",
-                        "masterInstanceType": "m3.xlarge",
-                        "name": "EmrClusterForBackup",
-                        "region": "eu-west-1",
-                        "subnetId": "subnet-9f2395c6",
-                        "terminateAfter": "5 Hour",
-                        "type": "EmrCluster"
-                    },
-                    {
-                        "failureAndRerunMode": "CASCADE",
-                        "id": "Default",
-                        "name": "Default",
-                        "pipelineLogUri": "s3://euw1-dynamodb-backups-prd-480503113116/logs/2017-06-22-13-53-48/",
-                        "resourceRole": "DataPipelineDefaultResourceRole",
-                        "role": "DataPipelineDefaultRole",
-                        "scheduleType": "ONDEMAND"
-                    },
-                    {
-                        "id": "DDBSourceTable5",
-                        "name": "DDBSourceTable5",
-                        "readThroughputPercent": "0.5",
-                        "tableName": "prd-shd-euw1-scotty_audit-actions",
-                        "type": "DynamoDBDataNode"
-                    },
-                    {
-                        "id": "TableBackupActivity5",
-                        "input": {
-                            "ref": "DDBSourceTable5"
-                        },
-                        "maximumRetries": "2",
-                        "name": "TableBackupActivity5",
-                        "output": {
-                            "ref": "S3BackupLocation5"
-                        },
-                        "resizeClusterBeforeRunning": "false",
-                        "runsOn": {
-                            "ref": "EmrClusterForBackup"
-                        },
-                        "step": "s3://dynamodb-emr-eu-west-1/emr-ddb-storage-handler/2.1.0/emr-ddb-2.1.0.jar,org.apache.hadoop.dynamodb.tools.DynamoDbExport,#{output.directoryPath},#{input.tableName},#{input.readThroughputPercent}",
-                        "type": "EmrActivity"
-                    },
-                    {
-                        "directoryPath": "s3://euw1-dynamodb-backups-prd-480503113116/prd-shd-euw1-scotty_audit-actions/#{format(@scheduledStartTime, 'YYYY-MM-dd-HH-mm-ss')}",
-                        "id": "S3BackupLocation5",
-                        "name": "S3BackupLocation5",
-                        "type": "S3DataNode"
-                    }
-                ],
-                "parameters": [],
-                "values": {}
+            "Projection": {
+              "ProjectionType": "ALL"
             },
-            "pipeline_id": "df-0024453ANW0OBWGL7YE"
-        }
-    ],
-    "Tables": [
-        {
-            "ResponseMetadata": {
-                "HTTPHeaders": {
-                    "content-length": "1202",
-                    "content-type": "application/x-amz-json-1.0",
-                    "date": "Thu, 22 Jun 2017 13:53:47 GMT",
-                    "x-amz-crc32": "3477012252",
-                    "x-amzn-requestid": "O02UK4SOAUB6CP49O5US1K1O63VV4KQNSO5AEMVJF66Q9ASUAAJG"
-                },
-                "HTTPStatusCode": 200,
-                "RequestId": "O02UK4SOAUB6CP49O5US1K1O63VV4KQNSO5AEMVJF66Q9ASUAAJG"
-            },
-            "Table": {
-                "AttributeDefinitions": [
-                    {
-                        "AttributeName": "id",
-                        "AttributeType": "S"
-                    },
-                    {
-                        "AttributeName": "startDate",
-                        "AttributeType": "S"
-                    },
-                    {
-                        "AttributeName": "startTime",
-                        "AttributeType": "S"
-                    }
-                ],
-                "CreationDateTime": "2015-06-15 16:12:43.471000+00:00",
-                "GlobalSecondaryIndexes": [
-                    {
-                        "IndexArn": "arn:aws:dynamodb:eu-west-1:480503113116:table/prd-shd-euw1-scotty_audit-actions/index/StartDateIndex",
-                        "IndexName": "StartDateIndex",
-                        "IndexSizeBytes": 4010436256,
-                        "IndexStatus": "ACTIVE",
-                        "ItemCount": 2091475,
-                        "KeySchema": [
-                            {
-                                "AttributeName": "startDate",
-                                "KeyType": "HASH"
-                            },
-                            {
-                                "AttributeName": "startTime",
-                                "KeyType": "RANGE"
-                            }
-                        ],
-                        "Projection": {
-                            "ProjectionType": "ALL"
-                        },
-                        "ProvisionedThroughput": {
-                            "NumberOfDecreasesToday": 0,
-                            "ReadCapacityUnits": 100,
-                            "WriteCapacityUnits": 50
-                        }
-                    }
-                ],
-                "ItemCount": 2091475,
-                "KeySchema": [
-                    {
-                        "AttributeName": "id",
-                        "KeyType": "HASH"
-                    }
-                ],
-                "ProvisionedThroughput": {
-                    "LastDecreaseDateTime": "2017-06-21 09:37:33.736000+00:00",
-                    "LastIncreaseDateTime": "2017-04-26 00:10:44.103000+00:00",
-                    "NumberOfDecreasesToday": 0,
-                    "ReadCapacityUnits": 350,
-                    "WriteCapacityUnits": 50
-                },
-                "TableArn": "arn:aws:dynamodb:eu-west-1:480503113116:table/prd-shd-euw1-scotty_audit-actions",
-                "TableName": "prd-shd-euw1-scotty_audit-actions",
-                "TableSizeBytes": 4010436256,
-                "TableStatus": "ACTIVE"
+            "ProvisionedThroughput": {
+              "NumberOfDecreasesToday": 0,
+              "ReadCapacityUnits": 100,
+              "WriteCapacityUnits": 50
             }
-        }
-    ]
+          }
+        ],
+        "ItemCount": 2091475,
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH"
+          }
+        ],
+        "ProvisionedThroughput": {
+          "LastDecreaseDateTime": "2017-06-21 09:37:33.736000+00:00",
+          "LastIncreaseDateTime": "2017-04-26 00:10:44.103000+00:00",
+          "NumberOfDecreasesToday": 0,
+          "ReadCapacityUnits": 350,
+          "WriteCapacityUnits": 50
+        },
+        "TableArn": "arn:aws:dynamodb:eu-west-1:480503113116:table/prd-shd-euw1-scotty_audit-actions",
+        "TableName": "prd-shd-euw1-scotty_audit-actions",
+        "TableSizeBytes": 4010436256,
+        "TableStatus": "ACTIVE"
+      }
+    }
+  ]
 }

@@ -236,6 +236,89 @@ class S3Util(object):
         return True
 
 
+class ApplicationAutoScalingUtil(object):
+    def __init__(self):
+        self.client = self._init_client()
+
+    def _init_client(self):
+        return boto3.client('application-autoscaling')
+
+    @retry(retry_on_exception=retry_if_throttling_error,
+           wait_exponential_multiplier=1000,
+           stop_max_attempt_number=5)
+    def describe_scalable_targets(self, service_namespace):
+        paginator = self.client.get_paginator('describe_scalable_targets')
+        targets = []
+        response = None
+
+        for page in paginator.paginate(ServiceNamespace=service_namespace):
+            response = page
+            targets += page.get('ScalableTargets', [])
+
+        if response:
+            response['ScalableTargets'] = targets
+
+        return response
+
+    @retry(retry_on_exception=retry_if_throttling_error,
+           wait_exponential_multiplier=1000,
+           stop_max_attempt_number=5)
+    def describe_scaling_policies(self, service_namespace):
+        paginator = self.client.get_paginator('describe_scaling_policies')
+        policies = []
+        response = None
+
+        for page in paginator.paginate(ServiceNamespace=service_namespace):
+            response = page
+            policies += page.get('ScalingPolicies', [])
+
+        if response:
+            response['ScalingPolicies'] = policies
+
+        return response
+
+    @retry(retry_on_exception=retry_if_throttling_error,
+           wait_exponential_multiplier=1000,
+           stop_max_attempt_number=5)
+    def delete_scaling_policy(self, policy_name, service_namespace, resource_id, scalable_dimension):
+        self.client.delete_scaling_policy(PolicyName=policy_name,
+                                          ServiceNamespace=service_namespace,
+                                          ResourceId=resource_id,
+                                          ScalableDimension=scalable_dimension)
+
+    @retry(retry_on_exception=retry_if_throttling_error,
+           wait_exponential_multiplier=1000,
+           stop_max_attempt_number=5)
+    def deregister_scalable_target(self, service_namespace, resource_id, scalable_dimension):
+        self.client.deregister_scalable_target(ServiceNamespace=service_namespace,
+                                               ResourceId=resource_id,
+                                               ScalableDimension=scalable_dimension)
+
+    @retry(retry_on_exception=retry_if_throttling_error,
+           wait_exponential_multiplier=1000,
+           stop_max_attempt_number=5)
+    def put_scaling_policy(self, policy_name, service_namespace, resource_id, scalable_dimension, policy_type,
+                           target_scaling_policy_configuration):
+        self.client.put_scaling_policy(PolicyName=policy_name,
+                                       ServiceNamespace=service_namespace,
+                                       ResourceId=resource_id,
+                                       ScalableDimension=scalable_dimension,
+                                       PolicyType=policy_type,
+                                       TargetTrackingScalingPolicyConfiguration=target_scaling_policy_configuration)
+
+    @retry(retry_on_exception=retry_if_throttling_error,
+           wait_exponential_multiplier=1000,
+           stop_max_attempt_number=5)
+    def register_scalable_target(self, service_namespace, resource_id, scalable_dimension,
+                                 min_capacity, max_capacity, role_arn):
+        self.client.register_scalable_target(ServiceNamespace=service_namespace,
+                                             ResourceId=resource_id,
+                                             ScalableDimension=scalable_dimension,
+                                             MinCapacity=min_capacity,
+                                             MaxCapacity=max_capacity,
+                                             RoleARN=role_arn)
+
+
 class SnsUtil(object):
     def __init__(self):
         self.client = boto3.client('sns')

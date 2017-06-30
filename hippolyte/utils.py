@@ -58,4 +58,11 @@ def list_tables_in_definition(pipeline_definition):
     return map(lambda x: x['tableName'], table_nodes)
 
 
-#print compute_required_throughput(30000, 300, 100, 0.5)
+def get_first_element_in_the_list_with(l, key, value):
+    element = filter(lambda x: x[key] == value, l)
+
+    if element:
+        return element[0]
+
+    return None
+
