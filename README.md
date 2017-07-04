@@ -1,4 +1,6 @@
 # Hippolyte [![Build Status](https://travis-ci.org/ocadotechnology/hippolyte.svg?branch=master)](https://travis-ci.org/ocadotechnology/hippolyte)
+
+[![Join the chat at https://gitter.im/ocado-hippolyte/Lobby](https://badges.gitter.im/ocado-hippolyte/Lobby.svg)](https://gitter.im/ocado-hippolyte/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 Hippolyte an at-scale, point-in-time backup solution for DynamoDB. It is designed to handle frequent, recurring backups of large numbers of tables, scale read throughput, and batch together backup jobs over multiple EMR clusters.
 
 ## Deployment
