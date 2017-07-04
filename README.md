@@ -2,10 +2,10 @@
 Hippolyte an at-scale, point-in-time backup solution for DynamoDB. It is designed to handle frequent, recurring backups of large numbers of tables, scale read throughput, and batch together backup jobs over multiple EMR clusters.
 
 ## Deployment
-Hippolyte is deployed with the [Serverless Framework](https://serverless.com/). This can be installed with `npm`. To start with run:
+Hippolyte is deployed with the [Serverless Framework](https://serverless.com/). We have tested it with Node.js 6.11 / Serverless 1.16.1 / serverless-python-requirements 5.0.3. This can be installed with `npm`. To start with run:
 ```
-npm install serverless
-npm install --save serverless-python-requirements
+npm install serverless@1.16.1
+npm install --save serverless-python-requirements@5.0.3
 ```
  To configure the project for your Amazon accounts, update `hippolyte/project_config.py` with the details of the account in which you intend to run the backup process, you will also need AWS credentials for creating all the dependent resources:
 * Lambda Function
