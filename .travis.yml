@@ -4,10 +4,15 @@ python:
   - "2.7"
 
 env:
-  - AWS_DEFAULT_REGION=us-east-1
+  - AWS_DEFAULT_REGION=us-east-1 TRAVIS_NODE_VERSION=6.11.0 SERVERLESS_VERSION=1.16.1 SERVERLESS_PYTHONR_VERSION=2.3.3
 
 install:
+  - rm -rf ~/.nvm && git clone https://github.com/creationix/nvm.git ~/.nvm && (cd ~/.nvm && git checkout `git describe --abbrev=0 --tags`) && source ~/.nvm/nvm.sh && nvm install $TRAVIS_NODE_VERSION
+  - npm install serverless@$SERVERLESS_VERSION
+  - npm install --save serverless-python-requirements@$SERVERLESS_PYTHONR_VERSION
   - pip install -r requirements-dev.txt
 
 script:
   - python tests/test.py
+  - serverless deploy --region $AWS_DEFAULT_REGION --stage dev --email test@test.com --noDeploy
+  - serverless deploy --region $AWS_DEFAULT_REGION --stage prod --email test@test.com --noDeploy
