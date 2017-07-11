@@ -124,9 +124,9 @@ class DynamoDbBooster(object):
             try:
                 self.dynamo_db_util.change_capacity_units(node['tableName'], new_read_capacity_units)
             except ClientError as e:
-                if e.error_code == 'LimitExceededException':
+                if e.message == 'LimitExceededException':
                     logger.error("Can't meet RTO for {} as max account read capacity limit exceeded. Details: {}"
-                                 .format(node['tableName'], e.error_message))
+                                 .format(node['tableName'], e.message))
                     new_read_capacity_units = read_capacity_units
 
             total_increase += new_read_capacity_units - read_capacity_units
