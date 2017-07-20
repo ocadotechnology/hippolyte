@@ -135,6 +135,6 @@ def is_backup_from_current_batch(backup_dir):
 def create_description(pipeline_failed_tables):
     table = ""
     for pipeline_id in pipeline_failed_tables:
-        table += "{}: {}".format(pipeline_id, ",".join(pipeline_failed_tables[pipeline_id]))
+        table += "{}: {}\n".format(pipeline_id, ",".join(pipeline_failed_tables[pipeline_id]))
 
     return table

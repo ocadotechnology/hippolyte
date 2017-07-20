@@ -127,7 +127,11 @@ class DynamoDbBooster(object):
                 if e.message == 'LimitExceededException':
                     logger.error("Can't meet RTO for {} as max account read capacity limit exceeded. Details: {}"
                                  .format(node['tableName'], e.message))
-                    new_read_capacity_units = read_capacity_units
+                else:
+                    logger.error("Failed to increase table {} read capacity limit. Details: {}"
+                                 .format(node['tableName'], e.message))
+
+                new_read_capacity_units = read_capacity_units
 
             total_increase += new_read_capacity_units - read_capacity_units
 
@@ -169,21 +173,38 @@ class DynamoDbBooster(object):
 
         for target in scalable_targets:
             logger.info("Adding scalable target for: {}".format(target['ResourceId']))
-            self.application_auto_scaling_util.register_scalable_target(target['ServiceNamespace'],
-                                                                        target['ResourceId'],
-                                                                        target['ScalableDimension'],
-                                                                        target['MinCapacity'],
-                                                                        target['MaxCapacity'],
-                                                                        target['RoleARN'])
+
+            try:
+                self.application_auto_scaling_util.register_scalable_target(target['ServiceNamespace'],
+                                                                            target['ResourceId'],
+                                                                            target['ScalableDimension'],
+                                                                            target['MinCapacity'],
+                                                                            target['MaxCapacity'],
+                                                                            target['RoleARN'])
+            except ClientError as e:
+                if 'table does not exist' in e.message:
+                    logger.warn("Can't restore scalable target for: {}, table was deleted".format(target['ResourceId']))
+                else:
+                    logger.warn(
+                        "Can't restore scalable target for: {}, error: {}".format(target['ResourceId'], e.message))
 
         for policy in scaling_policies:
             logger.info("Adding scaling policy: {}".format(policy['PolicyName']))
-            self.application_auto_scaling_util.put_scaling_policy(policy['PolicyName'],
-                                                                  policy['ServiceNamespace'],
-                                                                  policy['ResourceId'],
-                                                                  policy['ScalableDimension'],
-                                                                  policy['PolicyType'],
-                                                                  policy['TargetTrackingScalingPolicyConfiguration'])
+
+            try:
+                self.application_auto_scaling_util.put_scaling_policy(policy['PolicyName'],
+                                                                      policy['ServiceNamespace'],
+                                                                      policy['ResourceId'],
+                                                                      policy['ScalableDimension'],
+                                                                      policy['PolicyType'],
+                                                                      policy[
+                                                                          'TargetTrackingScalingPolicyConfiguration'])
+            except ClientError as e:
+                if 'table does not exist' in e.message:
+                    logger.warn("Can't restore scaling policy for: {}, table was deleted".format(target['ResourceId']))
+                else:
+                    logger.warn(
+                        "Can't restore scaling policy for: {}, error: {}".format(target['ResourceId'], e.message))
 
     def list_dynamodb_scalable_targets(self):
         targets = self.application_auto_scaling_util \
