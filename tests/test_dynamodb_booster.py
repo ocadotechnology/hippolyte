@@ -30,7 +30,8 @@ def create_test_table(dynamodb_client, table_name, table):
 
 
 def load_backup_metadata():
-    with open("resources/test_backup_metadata.json") as f:
+    metadata_file = os.path.join(os.path.dirname(__file__), 'resources/test_backup_metadata.json')
+    with open(metadata_file) as f:
         return f.read()
 
 
