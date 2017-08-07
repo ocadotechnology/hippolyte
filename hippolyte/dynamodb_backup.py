@@ -30,16 +30,19 @@ def _extract_from_arn(arn, position):
 def get_table_descriptions(exclude_from_backup):
     dynamo_db_util = DynamoDBUtil()
     table_names = dynamo_db_util.list_tables()
-    tables_filtered = []
+    tables_filtered = set()
 
-    for exclude in exclude_from_backup:
-        pat = re.compile(exclude)
-
-        for table_name in table_names:
+    for table_name in table_names:
+        should_be_added = True
+        for exclude in exclude_from_backup:
+            pat = re.compile(exclude)
             m = pat.match(table_name)
 
-            if not m:
-                tables_filtered.append(table_name)
+            if m:
+                should_be_added = False
+
+        if should_be_added:
+            tables_filtered.add(table_name)
 
     return dynamo_db_util.describe_tables(tables_filtered)
 

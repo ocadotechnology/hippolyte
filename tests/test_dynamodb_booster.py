@@ -1,6 +1,5 @@
 import unittest
 import boto3
-from copy import deepcopy
 import json
 import sys
 import os
@@ -12,27 +11,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 import hippolyte.dynamodb_booster
 import hippolyte.aws_utils
+from test_utils import create_test_table, load_backup_metadata
 
 TABLE_NAME = 'prd-shd-euw1-scotty_audit-actions'
-
-
-def create_test_table(dynamodb_client, table_name, table):
-    _table = deepcopy(table)
-    del _table['ProvisionedThroughput']["LastIncreaseDateTime"]
-    del _table['ProvisionedThroughput']["LastDecreaseDateTime"]
-    del _table['ProvisionedThroughput']["NumberOfDecreasesToday"]
-
-    dynamodb_client.create_table(TableName=table_name,
-                                 AttributeDefinitions=_table['AttributeDefinitions'],
-                                 KeySchema=_table['KeySchema'],
-                                 ProvisionedThroughput=_table['ProvisionedThroughput']
-                                 )
-
-
-def load_backup_metadata():
-    metadata_file = os.path.join(os.path.dirname(__file__), 'resources/test_backup_metadata.json')
-    with open(metadata_file) as f:
-        return f.read()
 
 
 def create_backup_metadata(s3_client, bucket, key, body):
