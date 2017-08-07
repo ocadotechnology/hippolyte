@@ -4,12 +4,14 @@ from copy import deepcopy
 import json
 import sys
 import os
+from botocore.exceptions import ClientError
 from moto import mock_s3, mock_datapipeline, mock_dynamodb2
 from mock import patch, Mock
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from hippolyte.dynamodb_booster import DynamoDbBooster
+import hippolyte.dynamodb_booster
+import hippolyte.aws_utils
 
 TABLE_NAME = 'prd-shd-euw1-scotty_audit-actions'
 
@@ -28,8 +30,7 @@ def create_test_table(dynamodb_client, table_name, table):
 
 
 def load_backup_metadata():
-    metadata_file = os.path.join(os.path.dirname(__file__), 'resources/test_backup_metadata.json')
-    with open(metadata_file) as f:
+    with open("resources/test_backup_metadata.json") as f:
         return f.read()
 
 
@@ -68,14 +69,44 @@ class FakeApplicationAutoscalingClient():
         return paginator
 
     def delete_scaling_policy(self, PolicyName, ServiceNamespace, ResourceId, ScalableDimension):
+        before_delete = len(self.scaling_policies)
         self.scaling_policies = filter(
-            lambda x: x['PolicyName'] != PolicyName and x['ScalableDimension'] != ScalableDimension,
+            lambda x: x['PolicyName'] != PolicyName or x['ScalableDimension'] != ScalableDimension,
             self.scaling_policies)
 
+        if len(self.scaling_policies) == before_delete:
+            raise ClientError(
+                {
+                    'Error':
+                        {
+                            'Code': 'ObjectNotFoundException',
+                            'Message': 'No scaling policy found for service namespace: dynamodb, resource ID: {},'
+                                       ' scalable dimension: {}: ObjectNotFoundException'.format(ResourceId,
+                                                                                                 ScalableDimension)
+                        }
+                },
+                'DeleteScalingPolicy'
+            )
+
     def deregister_scalable_target(self, ServiceNamespace, ResourceId, ScalableDimension):
+        before_delete = len(self.scalable_targets)
         self.scalable_targets = filter(
-            lambda x: x['ResourceId'] != ResourceId and x['ScalableDimension'] != ScalableDimension,
+            lambda x: x['ResourceId'] != ResourceId or x['ScalableDimension'] != ScalableDimension,
             self.scalable_targets)
+
+        if len(self.scalable_targets) == before_delete:
+            raise ClientError(
+                {
+                    'Error':
+                        {
+                            'Code': 'ObjectNotFoundException',
+                            'Message': 'No scalable target found for service namespace: dynamodb, resource ID: {},'
+                                       ' scalable dimension: {}: ObjectNotFoundException'.format(ResourceId,
+                                                                                                 ScalableDimension)
+                        }
+                },
+                'DeregisterScalableTarget'
+            )
 
     def put_scaling_policy(self, PolicyName, ServiceNamespace, ResourceId, ScalableDimension,
                            PolicyType, TargetTrackingScalingPolicyConfiguration):
@@ -117,7 +148,7 @@ class TestDynamoDbBooster(unittest.TestCase):
         old_rcu = get_old_rcu_and_boost(table_descriptions, 1000)
 
         bucket = 'euw1-dynamodb-backups-prd-480503113116'
-        booster = DynamoDbBooster(table_descriptions, bucket, 0.5)
+        booster = hippolyte.dynamodb_booster.DynamoDbBooster(table_descriptions, bucket, 0.5)
         create_backup_metadata(s3_client, bucket, 'backup_metadata-2099-06-06-00-00-01', backup_metadata)
 
         booster.restore_throughput()
@@ -137,7 +168,7 @@ class TestDynamoDbBooster(unittest.TestCase):
         scaling_policies = backup_metadata_dict['ScalingPolicies']
         scalable_targets = backup_metadata_dict['ScalableTargets']
 
-        booster = DynamoDbBooster(table_descriptions, 'foo', 0.5)
+        booster = hippolyte.dynamodb_booster.DynamoDbBooster(table_descriptions, 'foo', 0.5)
         autoscaling_util = booster.application_auto_scaling_util
 
         for policy in scaling_policies:
@@ -171,3 +202,39 @@ class TestDynamoDbBooster(unittest.TestCase):
 
         self.assertListEqual(scaling_policies_before, scaling_policies_after)
         self.assertListEqual(scalable_targets_before, scalable_targets_after)
+
+    @mock_dynamodb2
+    @mock_datapipeline
+    @mock_s3
+    @patch('hippolyte.dynamodb_booster.logger')
+    @patch("hippolyte.aws_utils.ApplicationAutoScalingUtil._init_client",
+           return_value=FakeApplicationAutoscalingClient())
+    def test_disable_autoscaling_warns_on_missing_resources(self, logger_mock, autoscaling_mock):
+        backup_metadata = load_backup_metadata()
+        backup_metadata_dict = json.loads(backup_metadata)
+        table_descriptions = backup_metadata_dict['Tables']
+        scaling_policies = backup_metadata_dict['ScalingPolicies']
+        scalable_targets = backup_metadata_dict['ScalableTargets']
+
+        hippolyte.dynamodb_booster.logger = logger_mock
+        booster = hippolyte.dynamodb_booster.DynamoDbBooster(table_descriptions, 'foo', 0.5)
+        autoscaling_util = booster.application_auto_scaling_util
+
+        for policy in scaling_policies:
+            autoscaling_util.put_scaling_policy(policy['PolicyName'],
+                                                policy['ServiceNamespace'],
+                                                policy['ResourceId'],
+                                                'NonExisting',
+                                                policy['PolicyType'],
+                                                policy['TargetTrackingScalingPolicyConfiguration'])
+
+        for target in scalable_targets:
+            autoscaling_util.register_scalable_target(target['ServiceNamespace'],
+                                                      target['ResourceId'],
+                                                      'NonExisting',
+                                                      target['MinCapacity'],
+                                                      target['MaxCapacity'],
+                                                      target['RoleARN'])
+
+        booster.disable_auto_scaling(scaling_policies, scalable_targets)
+        self.assertEqual(logger_mock.warn.call_count, 2)

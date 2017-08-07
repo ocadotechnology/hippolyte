@@ -155,16 +155,31 @@ class DynamoDbBooster(object):
 
             if read_scaling_policy:
                 logger.info("Removing scaling policy: {}".format(read_scaling_policy['PolicyName']))
-                self.application_auto_scaling_util. \
-                    delete_scaling_policy(read_scaling_policy['PolicyName'], "dynamodb",
-                                          resource_id, "dynamodb:table:ReadCapacityUnits")
+
+                try:
+                    self.application_auto_scaling_util. \
+                        delete_scaling_policy(read_scaling_policy['PolicyName'], "dynamodb",
+                                              resource_id, "dynamodb:table:ReadCapacityUnits")
+                except ClientError as e:
+                    if 'No scaling policy found for service namespace' in e.message:
+                        logger.warn("Can't delete scaling policy for: {}, as it does not exist".format(table_name))
+                    else:
+                        logger.warn(
+                            "Can't delete scaling policy for: {}, error: {}".format(table_name, e.message))
 
             read_scalable_target = get_first_element_in_the_list_with(scalable_targets, 'ResourceId', resource_id)
 
             if read_scalable_target:
                 logger.info("Removing scalable target for: {}".format(resource_id))
-                self.application_auto_scaling_util. \
-                    deregister_scalable_target("dynamodb", resource_id, "dynamodb:table:ReadCapacityUnits")
+                try:
+                    self.application_auto_scaling_util. \
+                        deregister_scalable_target("dynamodb", resource_id, "dynamodb:table:ReadCapacityUnits")
+                except ClientError as e:
+                    if 'No scalable target found for service namespace' in e.message:
+                        logger.warn("Can't delete scalable target for: {}, as it does not exist".format(table_name))
+                    else:
+                        logger.warn(
+                            "Can't delete scalable target for: {}, error: {}".format(table_name, e.message))
 
     def reenable_auto_scaling(self, last_configuration):
         logger.info("Reenabling autoscaling tables after backup.")

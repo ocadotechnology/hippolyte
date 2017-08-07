@@ -79,9 +79,11 @@ def backup(**kwargs):
             response = kwargs['pipeline_util'].create_pipeline()
         except ClientError as e:
             if e.message == 'LimitExceededException':
-                created = False
-                logger.info("Can't create more pipelines, as account limit exceeded. Details: {}"
+                logger.warn("Can't create more pipelines, as account limit exceeded. Details: {}"
                       .format(e.message))
+
+            created = False
+            logger.warn("Can't create more pipelines. Details: {}".format(e.message))
 
         if created:
             pipeline_descriptions.append(
