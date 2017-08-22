@@ -31,15 +31,16 @@ def get_table_descriptions(exclude_from_backup):
     dynamo_db_util = DynamoDBUtil()
     table_names = dynamo_db_util.list_tables()
     tables_filtered = set()
+    patterns = map(lambda x: re.compile(x), exclude_from_backup)
 
     for table_name in table_names:
         should_be_added = True
-        for exclude in exclude_from_backup:
-            pat = re.compile(exclude)
-            m = pat.match(table_name)
+        for pattern in patterns:
+            m = pattern.match(table_name)
 
             if m:
                 should_be_added = False
+                break
 
         if should_be_added:
             tables_filtered.add(table_name)
