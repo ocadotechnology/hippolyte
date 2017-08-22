@@ -16,12 +16,15 @@ class ConfigUtil(object):
         self.s3_util = S3Util()
         self.data_pipeline_util = DataPipelineUtil()
 
-    def save_configuration(self, pipeline_definitions, backup_bucket, table_descriptions):
+    def save_configuration(self, pipeline_definitions, backup_bucket, table_descriptions,
+                           scaling_policies, scalable_targets):
         self.s3_util.put_json(
             backup_bucket, self._get_metadata_file_name(),
             {
                 "Tables": table_descriptions,
-                "Pipelines": pipeline_definitions
+                "Pipelines": pipeline_definitions,
+                "ScalingPolicies": scaling_policies,
+                "ScalableTargets": scalable_targets
             }
         )
 
