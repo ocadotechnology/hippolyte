@@ -1,4 +1,5 @@
 from datetime import datetime
+import time
 import json
 from uuid import uuid4
 import boto3
@@ -254,6 +255,7 @@ class ApplicationAutoScalingUtil(object):
         for page in paginator.paginate(ServiceNamespace=service_namespace):
             response = page
             targets += page.get('ScalableTargets', [])
+            time.sleep(3)
 
         if response:
             response['ScalableTargets'] = targets
