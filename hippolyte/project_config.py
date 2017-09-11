@@ -6,6 +6,9 @@ ACCOUNT_CONFIGS = {
         'backup_bucket': 'hippolyte-eu-west-1-prod-backups',
         'exclude_from_backup': [
             'example-table-*'
+        ],
+        'always_backup': [
+            'this-is-not-an-example-table-1'
         ]
     }
 }

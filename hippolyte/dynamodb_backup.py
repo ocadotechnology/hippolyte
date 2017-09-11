@@ -27,25 +27,34 @@ def _extract_from_arn(arn, position):
     return re.findall("(.*?):", arn)[position]
 
 
-def get_table_descriptions(exclude_from_backup):
+def get_table_descriptions(exclude_from_backup, always_backup):
+    """
+    Decides which tables should be backed up, based on their names.
+    :param exclude_from_backup: list of regexp., matching tables will be skipped from backup
+    :param always_backup: those tables will always be backed up, despite exclude_from_backup matching
+    :return: list of table names to backup
+    """
     dynamo_db_util = DynamoDBUtil()
     table_names = dynamo_db_util.list_tables()
     tables_filtered = set()
     patterns = map(lambda x: re.compile(x), exclude_from_backup)
 
     for table_name in table_names:
-        should_be_added = True
-        for pattern in patterns:
-            m = pattern.match(table_name)
-
-            if m:
-                should_be_added = False
-                break
-
-        if should_be_added:
+        if table_name in always_backup or _not_excluded(table_name, patterns):
             tables_filtered.add(table_name)
 
     return dynamo_db_util.describe_tables(tables_filtered)
+
+
+def _not_excluded(table_name, patterns):
+    should_be_added = True
+
+    for pattern in patterns:
+        if pattern.match(table_name):
+            should_be_added = False
+            break
+
+    return should_be_added
 
 
 def get_account(context):
@@ -138,9 +147,10 @@ def lambda_handler(event, context):
 
     account_config = ACCOUNT_CONFIGS[account_id]
     exclude_from_backup = account_config['exclude_from_backup']
+    always_backup = account_config['always_backup']
 
     logger.info("Describing tables in the account.")
-    table_descriptions = get_table_descriptions(exclude_from_backup)
+    table_descriptions = get_table_descriptions(exclude_from_backup, always_backup)
 
     action = detect_action(event)
     action(**{
