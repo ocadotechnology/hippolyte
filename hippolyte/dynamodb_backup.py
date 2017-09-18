@@ -146,8 +146,8 @@ def lambda_handler(event, context):
         return
 
     account_config = ACCOUNT_CONFIGS[account_id]
-    exclude_from_backup = account_config['exclude_from_backup']
-    always_backup = account_config['always_backup']
+    exclude_from_backup = account_config.get('exclude_from_backup', [])
+    always_backup = account_config.get('always_backup', [])
 
     logger.info("Describing tables in the account.")
     table_descriptions = get_table_descriptions(exclude_from_backup, always_backup)
